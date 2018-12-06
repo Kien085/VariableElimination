@@ -195,15 +195,23 @@ public class VariableElim {
 		//also create another ArrayList<ArrayList<String>> in order to regurgitate what created what
 		ArrayList<ArrayList<String>> learning = new ArrayList<ArrayList<String>>();
 		ArrayList<String> empty = new ArrayList<String>();
+		
+		//another arraylist in case people want the table entries not numbered
+		ArrayList<ArrayList<String>> tables = new ArrayList<ArrayList<String>>();
 		for(int i = 0; i < thingRows; i++) //filling out the doubles with starting 1
 		{
 			learning.add(empty);
+		}
+		for(int i = 0; i < thingRows; i++) //filling out the doubles with starting 1
+		{
+			tables.add(empty);
 		}
 		
 		for(HashMap<ArrayList<String>,HashMap<Integer,Double>> cpt: CPTs) //for each of the CPTs
 		{
 			for(ArrayList<String> vars: cpt.keySet()) //search through all of the names of the CPT
 			{
+				int thingie = 0;
 				if(vars.contains(name))
 				{
 					if((vars.contains(newVars.get(0)))) //needs to both have the variable and something else
@@ -225,6 +233,25 @@ public class VariableElim {
 									ArrayList<String> copyLearning = (ArrayList<String>) learning.get(i).clone();
 									copyLearning.add(stringInt.toString());
 									learning.set(i, copyLearning);
+									
+									Integer stringDouble = new Integer(CPTs.indexOf(cpt));	//table we get from
+									ArrayList<String> copyTables = (ArrayList<String>) tables.get(i).clone();
+									StringBuilder newString = new StringBuilder();
+									newString.append("f" + stringDouble +"(");
+									for(int y = 0; y < vars.size(); y++)
+									{
+										int thing = (int)Math.pow(2, vars.size()-1-y);
+										thing = this.bugFix(vars.size(),i) & thing;
+										thing = thing >> vars.size()-1-y;
+									    newString.append(vars.get(y) + " = " + thing);
+									    if(y != vars.size()-1)
+									    {
+										  newString.append(",");
+									    }
+									}
+									newString.append(")");
+									copyTables.add(newString.toString());
+									tables.set(i, copyTables);
 								}
 								else
 								{
@@ -234,12 +261,32 @@ public class VariableElim {
 									ArrayList<String> copyLearning = (ArrayList<String>) learning.get(i).clone();
 									copyLearning.add(stringInt.toString());
 									learning.set(i, copyLearning);
+									
+									Integer stringDouble = new Integer(CPTs.indexOf(cpt));	//table we get from
+									ArrayList<String> copyTables = (ArrayList<String>) tables.get(i).clone();
+									StringBuilder newString = new StringBuilder();
+									newString.append("f" + stringDouble +"(");
+									for(int y = 0; y < vars.size(); y++)
+									{
+										int thing = (int)Math.pow(2, vars.size()-1-y);
+										thing = i & thing;
+										thing = thing >> vars.size()-1-y;
+										newString.append(vars.get(y) + " = " + thing);
+										if(y != vars.size()-1)
+									    {
+										  newString.append(",");
+									    }
+									}
+									newString.append(")");
+									copyTables.add(newString.toString());
+									tables.set(i, copyTables);
 								}
 								
 								Double tempDouble = new Double(tempDubs);
 								addThing.set(i, tempDouble);
 							}
 						}
+						thingie++;
 					}
 					// need to also multiply the variable = 0 and = 1 into the two numbers
 					// the only remaining cpts with the variable should only be two rows long
@@ -261,6 +308,12 @@ public class VariableElim {
 									ArrayList<String> copyLearning = (ArrayList<String>) learning.get(i).clone();
 									copyLearning.add(stringInt.toString());
 									learning.set(i, copyLearning);
+									
+									Integer stringDouble = new Integer(CPTs.indexOf(cpt));									
+									ArrayList<String> copyTables = (ArrayList<String>) tables.get(i).clone();
+									copyTables.add("f" + stringDouble +"(" + name + " = 0)");
+									tables.set(i, copyTables);
+									
 								}
 							}
 							else //i is odd, meaning that we want variable = 1
@@ -277,6 +330,11 @@ public class VariableElim {
 									ArrayList<String> copyLearning = (ArrayList<String>) learning.get(i).clone();
 									copyLearning.add(stringInt.toString());
 									learning.set(i, copyLearning);
+									
+									Integer stringDouble = new Integer(CPTs.indexOf(cpt));									
+									ArrayList<String> copyTables = (ArrayList<String>) tables.get(i).clone();
+									copyTables.add("f" + stringDouble +"(" + name + " = 1)");
+									tables.set(i, copyTables);
 								}
 							}
 						}
@@ -341,11 +399,42 @@ public class VariableElim {
 					System.out.print(" ");
 				}
 				System.out.print(learning.get(i).get(j));
-				System.out.print(" * ");
+				if(j != learning.get(i).size()-1)
+				{
+					System.out.print(" * ");
+				}
 			}
 			if(i % 2 == 0) //add +
 			{
-				System.out.print("+ ");
+				System.out.print(" + ");
+			}
+			else
+			{
+				System.out.println("");
+			}
+		}
+		System.out.println("-----------------------------------------");
+		
+		System.out.println("This is how the new CPT is formed from the previous tables");
+		System.out.println(cptName.keySet());
+		for(int i = 0; i < tables.size(); i++)
+		{
+			for(int j = 0; j < tables.get(i).size(); j++)
+			{
+				if(j == 0 && i % 2 == 0)
+				{
+					System.out.print(i/2);
+					System.out.print(" ");
+				}
+				System.out.print(tables.get(i).get(j));
+				if(j != tables.get(i).size()-1)
+				{
+					System.out.print(" * ");
+				}
+			}
+			if(i % 2 == 0) //add +
+			{
+				System.out.print(" + ");
 			}
 			else
 			{
@@ -363,6 +452,7 @@ public class VariableElim {
 	{
 		for(int j = 0; j < this.CPTs.size(); j++)
 		{
+			System.out.print("f" + j + " ");
 			System.out.println(this.CPTs.get(j).keySet());
 			for(HashMap<Integer, Double> i: this.CPTs.get(j).values())
 			{
@@ -549,5 +639,7 @@ public class VariableElim {
 		System.out.println(name + "=1: " + t1);
 	}
 	//TODO: Update normalize and endFactor so it isn't hardcoded for just wanting one factor
+	// A little difficult to do, since there doesn't seem to be any sources online with more than one factor on variable elimination
+	// Not many sources online with any cpts, really
 	
 }

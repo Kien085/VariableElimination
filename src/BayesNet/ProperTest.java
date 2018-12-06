@@ -158,7 +158,6 @@ public class ProperTest {
 		testing.printCPTs();
 		
 		testing.normalize("T");
-		
 	}
 	
 	
